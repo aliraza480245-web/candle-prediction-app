@@ -4,7 +4,8 @@ import { useEffect, useRef } from 'react';
 import { CandlestickSeries, ColorType, createChart, LineSeries, type IChartApi, type ISeriesApi, type Time, type CandlestickData, type LineData } from 'lightweight-charts';
 import type { Candle } from '@/lib/market';
 
-export default function CandleChart({ candles, ema }: { candles: Candle[]; ema: number }) {
+type EmaPoint = { time: number; value: number };
+export default function CandleChart({ candles, ema }: { candles: Candle[]; ema: EmaPoint[] }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -32,17 +33,10 @@ export default function CandleChart({ candles, ema }: { candles: Candle[]; ema: 
     const candleSeries = candleSeriesRef.current;
     const emaSeries = emaSeriesRef.current;
     if (!candleSeries || !emaSeries || !candles.length) return;
-    const candleData: CandlestickData<Time>[] = candles.map((candle) => ({ time: candle.time as Time, open: candle.open, high: candle.high, low: candle.low, close: candle.close }));
-    candleSeries.setData(candleData);
-    let value = candles[0].close;
-    const alpha = 2 / 13;
-    const emaData: LineData<Time>[] = candles.map((candle) => {
-      value = alpha * candle.close + (1 - alpha) * value;
-      return { time: candle.time as Time, value };
-    });
-    emaSeries.setData(emaData);
+    candleSeries.setData(candles.map((candle) => ({ time: candle.time as Time, open: candle.open, high: candle.high, low: candle.low, close: candle.close })) as CandlestickData<Time>[]);
+    emaSeries.setData(ema.map((point) => ({ time: point.time as Time, value: point.value })) as LineData<Time>[]);
     chartRef.current?.timeScale().fitContent();
   }, [candles, ema]);
 
-  return <div className="chart-canvas" ref={hostRef} aria-label="Interactive demo candlestick chart" />;
+  return <div className="chart-canvas" ref={hostRef} aria-label="Interactive candlestick chart" />;
 }
