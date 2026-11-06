@@ -1,0 +1,1 @@
+# candle-prediction-app
